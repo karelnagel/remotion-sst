@@ -14,15 +14,22 @@ export default $config({
     };
   },
   run: async () => {
-    new RemotionLambda("Remotion", {
+    const remotion = new RemotionLambda("Remotion", {
       function: {
         ephemerealStorageInMb: 2048,
         memorySizeInMb: 2048,
         timeoutInSeconds: 120,
       },
-      site:{
-        bundlePath:""
-      }
+      site: {
+        bundlePath: "/Users/karel/Documents/pulumi-remotion-lambda/remotion-example/build",
+      },
+    });
+    new sst.aws.Astro("Client", {
+      path: "client",
+      environment: {
+        REMOTION_FUNCTION_NAME: remotion.function.name,
+        REMOTION_SITE_URL: remotion.siteUrl,
+      },
     });
   },
 });

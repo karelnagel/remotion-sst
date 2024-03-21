@@ -12,5 +12,19 @@
 	</head>
 	<body>
 		<h1>Astro</h1>
+		<div>
+			<p>site: {import.meta.env.REMOTION_SITE_URL}</p>
+			<p>function: {import.meta.env.REMOTION_FUNCTION_NAME}</p>
+			<button >render</button>
+		</div>
 	</body>
 </html>
+<script>
+	const btn = document.querySelector("button");
+	btn!.addEventListener("click", async () => {
+		const res = await fetch("/api/render", { method: "POST" });
+		const data = await res.json();
+		console.log(data);
+	});
+</script>
+

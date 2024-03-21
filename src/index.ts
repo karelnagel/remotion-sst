@@ -175,7 +175,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
         { parent: this }
       );
     }
-    this.siteUrl = pulumi.interpolate`Site: https://${this.bucket.bucket}.s3.${this.bucket.region}amazonaws.com/index.html \nFunction: ${this.function.name}`;
+    this.siteUrl = pulumi.interpolate`https://${this.bucket.bucket}.s3.${this.bucket.region}.amazonaws.com/index.html`;
 
     this.registerOutputs({});
   }
