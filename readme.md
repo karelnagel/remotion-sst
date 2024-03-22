@@ -8,9 +8,9 @@ Easy to deploy Remotion Lambda with Pulumi/SST in a few lines of code and after 
 const remotion = new RemotionLambda("Remotion", {
     path: "remotion-example",
     function: {
-    ephemerealStorageInMb: 2048,
-    memorySizeInMb: 2048,
-    timeoutInSeconds: 120,
+        ephemerealStorageInMb: 2048,
+        memorySizeInMb: 2048,
+        timeoutInSeconds: 120,
     },
 });
 new sst.aws.Astro("Client", {
