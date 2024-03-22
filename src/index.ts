@@ -2,15 +2,15 @@ import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { hostedLayers } from "./hosted-layers";
 import fs from "fs";
+import { execSync } from "child_process";
+import path from "path";
 
 type RemotionLambdaConfig = {
+  path: string;
   function: {
     ephemerealStorageInMb: number;
     timeoutInSeconds: number;
     memorySizeInMb: number;
-  };
-  site: {
-    bundlePath: string;
   };
 };
 
@@ -25,6 +25,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
     const policy = new aws.iam.Policy(
       name + "Policy",
       {
+        name: "remotion-lambda-policy",
         policy: {
           Version: "2012-10-17",
           Statement: [
@@ -47,13 +48,13 @@ export class RemotionLambda extends pulumi.ComponentResource {
                 "s3:PutObject",
                 "s3:GetBucketLocation",
               ],
-              Resource: ["arn:aws:s3:::*"],
+              Resource: ["arn:aws:s3:::remotionlambda-*"],
             },
             {
               Sid: "2",
               Effect: "Allow",
               Action: ["lambda:InvokeFunction"],
-              Resource: ["arn:aws:lambda:*:*:function:*"],
+              Resource: ["arn:aws:lambda:*:*:function:remotion-render-*"],
             },
             {
               Sid: "3",
@@ -65,7 +66,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
               Sid: "4",
               Effect: "Allow",
               Action: ["logs:CreateLogStream", "logs:PutLogEvents"],
-              Resource: ["arn:aws:logs:*:*:log-group:/aws/lambda/*", "arn:aws:logs:*:*:log-group:/aws/lambda-insights:*"],
+              Resource: ["arn:aws:logs:*:*:log-group:/aws/lambda/remotion-render-*", "arn:aws:logs:*:*:log-group:/aws/lambda-insights:*"],
             },
           ],
         },
@@ -76,6 +77,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
     const role = new aws.iam.Role(
       name + "Role",
       {
+        name: "remotion-lambda-role",
         assumeRolePolicy: JSON.stringify({
           Version: "2012-10-17",
           Statement: [
@@ -101,14 +103,22 @@ export class RemotionLambda extends pulumi.ComponentResource {
       { parent: this }
     );
 
-    const zip = "/Users/karel/Documents/pulumi-remotion-lambda/remotionlambda-arm64.zip";
+    const LAMBDA_VERSION_STRING = "4.0.126".replace(/\./g, "-").replace(/\+/g, "-").substring(0, 10);
+    const fnNameRender = [
+      `remotion-render-${LAMBDA_VERSION_STRING}`,
+      `mem${args.function.memorySizeInMb}mb`,
+      `disk${args.function.ephemerealStorageInMb}mb`,
+      `${args.function.timeoutInSeconds}sec`,
+    ].join("-");
+    const zipPath = path.join(process.cwd(), "node_modules", "@remotion/lambda", "remotionlambda-arm64.zip");
     this.function = new aws.lambda.Function(
       name + "Function",
       {
+        name: fnNameRender,
         role: role.arn,
         runtime: "nodejs18.x",
         architectures: ["arm64"],
-        code: new pulumi.asset.FileArchive(zip),
+        code: new pulumi.asset.FileArchive(zipPath),
         description: "Renders a Remotion video",
         timeout: args.function.timeoutInSeconds,
         memorySize: args.function.memorySizeInMb,
@@ -121,8 +131,13 @@ export class RemotionLambda extends pulumi.ComponentResource {
       { parent: this }
     );
 
-    this.bucket = new aws.s3.Bucket(name + "Bucket", {}, { parent: this });
-    this.bucket.bucket.apply((x) => console.log(x));
+    this.bucket = new aws.s3.Bucket(
+      name + "Bucket",
+      {
+        bucket: "remotionlambda-" + name.toLowerCase(),
+      },
+      { parent: this }
+    );
 
     new aws.s3.BucketPublicAccessBlock(
       name + "BucketPublicAccessBlock",
@@ -154,15 +169,18 @@ export class RemotionLambda extends pulumi.ComponentResource {
       },
       { parent: this }
     );
+    const sitePath = path.join(process.cwd(), args.path);
+    execSync(`cd ${sitePath} && npx remotion bundle`);
 
-    const files = fs.readdirSync(args.site.bundlePath);
+    const bundlePath = `${sitePath}/build`;
+    const files = fs.readdirSync(bundlePath);
     console.log(files);
     for (const [i, file] of files.entries()) {
       new aws.s3.BucketObject(
         name + "File" + i,
         {
           bucket: this.bucket.bucket,
-          source: new pulumi.asset.FileAsset(args.site.bundlePath + "/" + file),
+          source: new pulumi.asset.FileAsset(bundlePath + "/" + file),
           key: file,
           contentType: file.endsWith(".html")
             ? "text/html"

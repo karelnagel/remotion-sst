@@ -1,18 +1,38 @@
 import type { APIRoute } from "astro";
-import { renderMediaOnLambda } from "@remotion/lambda/client";
+import { renderMediaOnLambda, getRenderProgress } from "@remotion/lambda/client";
 
 export const POST: APIRoute = async () => {
-  console.log(import.meta.env.REMOTION_FUNCTION_NAME, import.meta.env.REMOTION_SITE_URL);
+  const functionName = import.meta.env.REMOTION_FUNCTION_NAME;
+  const bucketName = import.meta.env.REMOTION_BUCKET_NAME;
+  const serveUrl = import.meta.env.REMOTION_SITE_URL;
+
+  console.log({ functionName, serveUrl, bucketName });
   const res = await renderMediaOnLambda({
-    functionName: import.meta.env.REMOTION_FUNCTION_NAME,
-    serveUrl: import.meta.env.REMOTION_SITE_URL,
+    functionName,
+    serveUrl,
     composition: "HelloWorld",
     codec: "h264",
+    privacy: "no-acl",
     region: "eu-central-1",
   });
-  return new Response(JSON.stringify(res), {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+
+  while (true) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const progress = await getRenderProgress({
+      renderId: res.renderId,
+      bucketName,
+      functionName,
+      region: "eu-central-1",
+    });
+
+    if (progress.done)
+      return new Response(JSON.stringify(progress), {
+        headers: { "Content-Type": "application/json" },
+      });
+    else if (progress.fatalErrorEncountered)
+      return new Response(JSON.stringify(progress), {
+        headers: { "Content-Type": "application/json" },
+        status: 500,
+      });
+  }
 };

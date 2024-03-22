@@ -1,7 +1,10 @@
+.sst/
+node_modules/
+remotion-example/
+client/
+
 sst.config.ts
 sst-env.d.ts
 forwarder.js
-.sst
-node_modules/
 .env
 .gitignore

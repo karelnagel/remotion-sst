@@ -16,6 +16,8 @@
 			<p>site: {import.meta.env.REMOTION_SITE_URL}</p>
 			<p>function: {import.meta.env.REMOTION_FUNCTION_NAME}</p>
 			<button >render</button>
+			<video controls id="video"></video>
+			<div id="result"></div>
 		</div>
 	</body>
 </html>
@@ -23,8 +25,17 @@
 	const btn = document.querySelector("button");
 	btn!.addEventListener("click", async () => {
 		const res = await fetch("/api/render", { method: "POST" });
+		
 		const data = await res.json();
 		console.log(data);
+		const result = document.querySelector("#result") as HTMLDivElement;
+		result!.textContent = JSON.stringify(data, null, 2);
+
+
+		const src= data.outputFile
+		const video = document.querySelector("#video") as HTMLVideoElement;
+		video!.src = src;
+		video!.play();
 	});
 </script>
 
