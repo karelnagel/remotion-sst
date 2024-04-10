@@ -1,11 +1,11 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
-import { RemotionLambda } from "./src";
+import { RemotionLambda, permissions } from "./src";
 
 export default $config({
   app: (input) => {
     return {
-      name: "pulumi-remotion-lambda",
+      name: "pulumi-remotion",
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
       providers: {
@@ -24,13 +24,11 @@ export default $config({
     });
     new sst.aws.Astro("Client", {
       path: "client",
+      permissions,
       environment: {
         REMOTION_FUNCTION_NAME: remotion.function.name,
         REMOTION_SITE_URL: remotion.siteUrl,
         REMOTION_BUCKET_NAME: remotion.bucket.bucket,
-        // Todo: don't use admin aws keys
-        REMOTION_AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID!,
-        REMOTION_AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY!,
       },
     });
   },
