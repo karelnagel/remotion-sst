@@ -4,19 +4,19 @@ import { hostedLayers } from "./hosted-layers";
 import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
+// Todo: probably not the best place to import this
+import { Link } from "../.sst/platform/src/components";
 
 type RemotionLambdaConfig = {
   path: string;
   forceDestroy?: boolean;
   bundleCommand?: string;
-  function: {
-    ephemerealStorageInMb: number;
-    timeoutInSeconds: number;
-    memorySizeInMb: number;
-  };
+  ephemerealStorageInMb?: number;
+  timeoutInSeconds?: number;
+  memorySizeInMb?: number;
 };
 
-export class RemotionLambda extends pulumi.ComponentResource {
+export class RemotionLambda extends pulumi.ComponentResource implements Link.Linkable, Link.AWS.Linkable {
   public bucket: aws.s3.Bucket;
   public function: aws.lambda.Function;
   public siteUrl: pulumi.Output<string>;
@@ -114,11 +114,11 @@ export class RemotionLambda extends pulumi.ComponentResource {
         architectures: ["arm64"],
         code: new pulumi.asset.FileArchive(zipPath),
         description: "Renders a Remotion video",
-        timeout: args.function.timeoutInSeconds,
-        memorySize: args.function.memorySizeInMb,
+        timeout: args.timeoutInSeconds || 120,
+        memorySize: args.memorySizeInMb || 2048,
         layers: aws.getRegion().then((region) => hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`)),
         ephemeralStorage: {
-          size: args.function.ephemerealStorageInMb,
+          size: args.ephemerealStorageInMb || 2048,
         },
       },
       { parent: this }
@@ -247,5 +247,18 @@ export class RemotionLambda extends pulumi.ComponentResource {
     ];
 
     this.registerOutputs({});
+  }
+  getSSTLink(): Link.Definition {
+    return {
+      properties: {
+        functionName: this.function.name,
+        bucketName: this.bucket.bucket,
+        siteUrl: this.siteUrl,
+      },
+    };
+  }
+
+  getSSTAWSPermissions(): sst.aws.FunctionPermissionArgs[] {
+    return this.permissions;
   }
 }

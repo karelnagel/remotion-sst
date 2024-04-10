@@ -1,4 +1,5 @@
 ---
+import { Resource } from "sst";
 
 ---
 
@@ -13,9 +14,9 @@
 	<body>
 		<h1>Astro</h1>
 		<div>
-			<p>site: {import.meta.env.REMOTION_SITE_URL}</p>
-			<p>function: {import.meta.env.REMOTION_FUNCTION_NAME}</p>
-			<button >render</button>
+			<p>site: {Resource.Remotion.siteUrl}</p>
+			<p>function: {Resource.Remotion.functionName}</p>
+			<button>render</button>
 			<video controls id="video"></video>
 			<div id="result"></div>
 		</div>
