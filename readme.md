@@ -27,3 +27,4 @@ new sst.aws.Astro("Client", {
 - make it possible to deploy multiple stacks (main, dev, etc) in the same account, currently setting the function, role and bucket name are hardcoded so you can't have the same name with different stacks
 - custom domains for lambda, like SST does for every FE stack
 - everything in bucket is public
+- the first deploy fails rn bc bucket isn't ready yet, so you need to run deploy twice at first

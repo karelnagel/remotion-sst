@@ -36,7 +36,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
         ignorePublicAcls: false,
         restrictPublicBuckets: false,
       },
-      { parent: this }
+      { parent: this, dependsOn: [this.bucket] }
     );
     new aws.s3.BucketPolicy(
       name + "BucketPolicy",
@@ -55,7 +55,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
           ],
         },
       },
-      { parent: this }
+      { parent: this, dependsOn: [this.bucket] }
     );
 
     // Bundling and uploading
@@ -80,16 +80,53 @@ export class RemotionLambda extends pulumi.ComponentResource {
             ? "application/javascript"
             : "application/octet-stream",
         },
-        { parent: this }
+        { parent: this, dependsOn: [this.bucket] }
       );
     }
 
     // Creating function
+    const role = new aws.iam.Role(
+      name + "Role",
+      {
+        assumeRolePolicy: JSON.stringify({
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: {
+                Service: "lambda.amazonaws.com",
+              },
+              Action: "sts:AssumeRole",
+            },
+          ],
+        }),
+      },
+      { parent: this }
+    );
+
+    const zipPath = path.join(process.cwd(), "node_modules", "@remotion/lambda", "remotionlambda-arm64.zip");
+    this.function = new aws.lambda.Function(
+      name + "Function",
+      {
+        role: role.arn,
+        runtime: "nodejs18.x",
+        handler: "index.handler",
+        architectures: ["arm64"],
+        code: new pulumi.asset.FileArchive(zipPath),
+        description: "Renders a Remotion video",
+        timeout: args.function.timeoutInSeconds,
+        memorySize: args.function.memorySizeInMb,
+        layers: aws.getRegion().then((region) => hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`)),
+        ephemeralStorage: {
+          size: args.function.ephemerealStorageInMb,
+        },
+      },
+      { parent: this }
+    );
+
     const policy = new aws.iam.Policy(
       name + "Policy",
       {
-        // Todo: remove the name
-        name: "remotion-lambda-policy",
         policy: {
           Version: "2012-10-17",
           Statement: [
@@ -118,7 +155,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
               Sid: "2",
               Effect: "Allow",
               Action: ["lambda:InvokeFunction"],
-              Resource: ["arn:aws:lambda:*:*:function:remotion-render-*"],
+              Resource: [this.function.arn],
             },
             {
               Sid: "3",
@@ -130,69 +167,17 @@ export class RemotionLambda extends pulumi.ComponentResource {
               Sid: "4",
               Effect: "Allow",
               Action: ["logs:CreateLogStream", "logs:PutLogEvents"],
-              Resource: ["arn:aws:logs:*:*:log-group:/aws/lambda/remotion-render-*", "arn:aws:logs:*:*:log-group:/aws/lambda-insights:*"],
+              Resource: [
+                pulumi.interpolate`arn:aws:logs:*:*:log-group:/aws/lambda/${this.function.name}`,
+                "arn:aws:logs:*:*:log-group:/aws/lambda-insights:*",
+              ],
             },
           ],
         },
       },
       { parent: this }
     );
-
-    const role = new aws.iam.Role(
-      name + "Role",
-      {
-        // Todo: remove the name
-        name: "remotion-lambda-role",
-        assumeRolePolicy: JSON.stringify({
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Effect: "Allow",
-              Principal: {
-                Service: "lambda.amazonaws.com",
-              },
-              Action: "sts:AssumeRole",
-            },
-          ],
-        }),
-      },
-      { parent: this }
-    );
-
     new aws.iam.PolicyAttachment(name + "RolePolicyAttachment", { policyArn: policy.arn, roles: [role.name] }, { parent: this });
-
-    const remotionLambdaPackageJsonPath = path.join(process.cwd(), "node_modules", "@remotion/lambda", "package.json");
-    const version = JSON.parse(fs.readFileSync(remotionLambdaPackageJsonPath, "utf-8")).version;
-    const versionString = version.replace(/\./g, "-").replace(/\+/g, "-").substring(0, 10);
-
-    const fnNameRender = [
-      `remotion-render`,
-      versionString,
-      `mem${args.function.memorySizeInMb}mb`,
-      `disk${args.function.ephemerealStorageInMb}mb`,
-      `${args.function.timeoutInSeconds}sec`,
-    ].join("-");
-    const zipPath = path.join(process.cwd(), "node_modules", "@remotion/lambda", "remotionlambda-arm64.zip");
-    this.function = new aws.lambda.Function(
-      name + "Function",
-      {
-        // Todo: remove the name
-        name: fnNameRender,
-        role: role.arn,
-        runtime: "nodejs18.x",
-        handler: "index.handler",
-        architectures: ["arm64"],
-        code: new pulumi.asset.FileArchive(zipPath),
-        description: "Renders a Remotion video",
-        timeout: args.function.timeoutInSeconds,
-        memorySize: args.function.memorySizeInMb,
-        layers: aws.getRegion().then((region) => hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`)),
-        ephemeralStorage: {
-          size: args.function.ephemerealStorageInMb,
-        },
-      },
-      { parent: this }
-    );
 
     this.siteUrl = pulumi.interpolate`https://${this.bucket.bucket}.s3.${this.bucket.region}.amazonaws.com/index.html`;
 
@@ -212,7 +197,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
       },
       {
         actions: ["iam:PassRole"],
-        resources: ["arn:aws:iam::*:role/remotion-lambda-role"],
+        resources: [role.arn],
       },
       {
         actions: [
@@ -249,11 +234,11 @@ export class RemotionLambda extends pulumi.ComponentResource {
           "lambda:PutRuntimeManagementConfig",
           "lambda:TagResource",
         ],
-        resources: ["arn:aws:lambda:*:*:function:remotion-render-*"],
+        resources: [this.function.arn],
       },
       {
         actions: ["logs:CreateLogGroup", "logs:PutRetentionPolicy"],
-        resources: ["arn:aws:logs:*:*:log-group:/aws/lambda/remotion-render-*"],
+        resources: [pulumi.interpolate`arn:aws:logs:*:*:log-group:/aws/lambda/${this.function.name}`],
       },
       {
         actions: ["lambda:GetLayerVersion"],
