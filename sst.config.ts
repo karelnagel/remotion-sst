@@ -16,6 +16,7 @@ export default $config({
   run: async () => {
     const remotion = new RemotionLambda("Remotion", {
       path: "remotion-example",
+      forceDestroy: true,
       function: {
         ephemerealStorageInMb: 2048,
         memorySizeInMb: 2048,
