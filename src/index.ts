@@ -4,6 +4,7 @@ import { hostedLayers } from "./hosted-layers";
 import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
+export { permissions } from "./permissions";
 
 type RemotionLambdaConfig = {
   path: string;
@@ -134,7 +135,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
     this.bucket = new aws.s3.Bucket(
       name + "Bucket",
       {
-        bucket: "remotionlambda-" + name.toLowerCase(),
+        bucket: "remotionlambda-2" + name.toLowerCase(),
       },
       { parent: this }
     );
