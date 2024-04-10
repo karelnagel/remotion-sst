@@ -14,6 +14,7 @@ export const POST: APIRoute = async () => {
     codec: "h264",
     privacy: "no-acl",
     region: "eu-central-1",
+    forceBucketName: bucketName,
   });
 
   while (true) {

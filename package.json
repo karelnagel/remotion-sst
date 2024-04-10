@@ -1,6 +1,6 @@
 {
   "name": "pulumi-remotion-lambda",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "src/index.ts",
   "workspaces": [
     "remotion-example",

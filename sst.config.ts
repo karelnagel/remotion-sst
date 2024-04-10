@@ -1,6 +1,6 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
-import { RemotionLambda, permissions } from "./src";
+import { RemotionLambda } from "./src";
 
 export default $config({
   app: (input) => {
@@ -16,6 +16,7 @@ export default $config({
   run: async () => {
     const remotion = new RemotionLambda("Remotion", {
       path: "remotion-example",
+      forceDestroy: true,
       function: {
         ephemerealStorageInMb: 2048,
         memorySizeInMb: 2048,
@@ -24,7 +25,7 @@ export default $config({
     });
     new sst.aws.Astro("Client", {
       path: "client",
-      permissions,
+      permissions: remotion.permissions,
       environment: {
         REMOTION_FUNCTION_NAME: remotion.function.name,
         REMOTION_SITE_URL: remotion.siteUrl,
