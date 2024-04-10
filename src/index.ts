@@ -4,6 +4,7 @@ import { hostedLayers } from "./hosted-layers";
 import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
+export { permissions } from "./permissions";
 
 type RemotionLambdaConfig = {
   path: string;
