@@ -26,7 +26,6 @@ export class RemotionLambda extends pulumi.ComponentResource {
     super("pkg:index:RemotionLambda", name, args, opts);
     // Creating bucket
     this.bucket = new aws.s3.Bucket(name + "Bucket", { forceDestroy: args.forceDestroy }, { parent: this });
-    const bucketArn = pulumi.interpolate`${this.bucket.arn}/*`;
 
     new aws.s3.BucketPublicAccessBlock(
       name + "BucketPublicAccessBlock",
@@ -51,7 +50,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
               Effect: "Allow",
               Principal: "*",
               Action: ["s3:GetObject"],
-              Resource: [bucketArn],
+              Resource: [pulumi.interpolate`${this.bucket.arn}/*`],
             },
           ],
         },
@@ -113,9 +112,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
                 "s3:PutObject",
                 "s3:GetBucketLocation",
               ],
-              // Todo: use bucket arn
-              Resource: ["*"],
-              // Resource: [bucketArn],
+              Resource: [pulumi.interpolate`${this.bucket.arn}*`],
             },
             {
               Sid: "2",
@@ -232,7 +229,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
           "s3:PutBucketPublicAccessBlock",
           "s3:PutLifecycleConfiguration",
         ],
-        resources: [bucketArn],
+        resources: [pulumi.interpolate`${this.bucket.arn}/*`],
       },
       {
         actions: ["s3:ListAllMyBuckets"],
