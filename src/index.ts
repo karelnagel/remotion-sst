@@ -4,7 +4,6 @@ import { hostedLayers } from "./hosted-layers";
 import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
-export { permissions } from "./permissions";
 
 type RemotionLambdaConfig = {
   path: string;
@@ -21,10 +20,10 @@ export class RemotionLambda extends pulumi.ComponentResource {
   public bucket: aws.s3.Bucket;
   public function: aws.lambda.Function;
   public siteUrl: pulumi.Output<string>;
+  public permissions: { actions: string[]; resources: pulumi.Input<string>[] }[];
 
   constructor(name: string, args: RemotionLambdaConfig, opts?: pulumi.ComponentResourceOptions) {
     super("pkg:index:RemotionLambda", name, args, opts);
-
     // Creating bucket
     this.bucket = new aws.s3.Bucket(
       name + "Bucket",
@@ -202,6 +201,71 @@ export class RemotionLambda extends pulumi.ComponentResource {
     );
 
     this.siteUrl = pulumi.interpolate`https://${this.bucket.bucket}.s3.${this.bucket.region}.amazonaws.com/index.html`;
+
+    this.permissions = [
+      {
+        actions: [
+          "servicequotas:GetServiceQuota",
+          "servicequotas:GetAWSDefaultServiceQuota",
+          "servicequotas:RequestServiceQuotaIncrease",
+          "servicequotas:ListRequestedServiceQuotaChangeHistoryByQuota",
+        ],
+        resources: ["*"],
+      },
+      {
+        actions: ["iam:SimulatePrincipalPolicy"],
+        resources: ["*"],
+      },
+      {
+        actions: ["iam:PassRole"],
+        resources: ["arn:aws:iam::*:role/remotion-lambda-role"],
+      },
+      {
+        actions: [
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:PutObjectAcl",
+          "s3:PutObject",
+          "s3:CreateBucket",
+          "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:PutBucketAcl",
+          "s3:DeleteBucket",
+          "s3:PutBucketOwnershipControls",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutLifecycleConfiguration",
+        ],
+        resources: [pulumi.interpolate`arn:aws:s3:::${this.bucket.bucket}`],
+      },
+      {
+        actions: ["s3:ListAllMyBuckets"],
+        resources: ["*"],
+      },
+      {
+        actions: ["lambda:ListFunctions", "lambda:GetFunction"],
+        resources: ["*"],
+      },
+      {
+        actions: [
+          "lambda:InvokeAsync",
+          "lambda:InvokeFunction",
+          "lambda:CreateFunction",
+          "lambda:DeleteFunction",
+          "lambda:PutFunctionEventInvokeConfig",
+          "lambda:PutRuntimeManagementConfig",
+          "lambda:TagResource",
+        ],
+        resources: ["arn:aws:lambda:*:*:function:remotion-render-*"],
+      },
+      {
+        actions: ["logs:CreateLogGroup", "logs:PutRetentionPolicy"],
+        resources: ["arn:aws:logs:*:*:log-group:/aws/lambda/remotion-render-*"],
+      },
+      {
+        actions: ["lambda:GetLayerVersion"],
+        resources: ["arn:aws:lambda:*:678892195805:layer:remotion-binaries-*", "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension*"],
+      },
+    ];
 
     this.registerOutputs({});
   }
