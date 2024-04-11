@@ -8,16 +8,16 @@ The easiest way to deploy Remotion Lambda to AWS with SST/Pulumi and use in your
 npm install remotion-sst
 ```
 
-## Usage 
+## Usage
 
 ```ts
 // sst.config.ts
 const remotion = new RemotionLambda("Remotion", {
-    path: "remotion-example",
+  path: "packages/remotion",
 });
 new sst.aws.Astro("Client", {
-    path: "client",
-    link: [remotion]
+  path: "packages/client",
+  link: [remotion],
 });
 ```
 
@@ -26,11 +26,11 @@ new sst.aws.Astro("Client", {
 import { Resource } from "sst";
 
 const res = await renderMediaOnLambda({
-    functionName: Resource.Remotion.functionName,
-    serveUrl: Resource.Remotion.siteUrl,
-    forceBucketName: Resource.Remotion.bucketName,
-    region: Resource.Remotion.region,
-    composition: "HelloWorld",
-    codec: "h264",
+  functionName: Resource.Remotion.functionName,
+  serveUrl: Resource.Remotion.siteUrl,
+  forceBucketName: Resource.Remotion.bucketName,
+  region: Resource.Remotion.region,
+  composition: "HelloWorld",
+  codec: "h264",
 });
 ```

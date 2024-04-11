@@ -1,0 +1,40 @@
+---
+import { Copy } from "./_Copy";
+import { Video } from "./_Video";
+import "../../styles.css";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Remotion SST</title>
+  </head>
+  <body class="bg-[#1b1b1d] text-white h-screen w-screen flex items-center">
+    <main class="max-w-screen-xl mx-auto w-full grid md:grid-cols-2 gap-6 px-4">
+      <div class="flex flex-col gap-4 items-start justify-center">
+        <h1 class="text-5xl font-bold">Remotion SST</h1>
+        <p>
+          The easiest way to deploy Remotion Lambda to AWS with SST/Pulumi and use in your
+          applications.
+        </p>
+        <div class="flex gap-3 items-center">
+          <a
+            href="https://github.com/karelnagel/remotion-sst"
+            target="_blank"
+            class="bg-sst p-2 px-4 rounded-md"
+          >
+            GitHub
+          </a>
+          <div class="bg-white/20 p-2 flex gap-4 px-4 items-center rounded-md">
+            <span class="">npm install remotion-sst</span>
+            <Copy text="npm install remotion-sst" client:load />
+          </div>
+        </div>
+      </div>
+      <Video client:load />
+    </main>
+  </body>
+</html>

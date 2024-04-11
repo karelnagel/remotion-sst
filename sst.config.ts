@@ -15,12 +15,13 @@ export default $config({
   },
   run: async () => {
     const remotion = new RemotionLambda("Remotion", {
-      path: "remotion-example",
+      path: "example",
       forceDestroy: true,
     });
-    new sst.aws.Astro("Client", {
-      path: "client",
+    new sst.aws.Astro("Example", {
+      path: "example",
       link: [remotion],
+      domain: process.env.EXAMPLE_DOMAIN,
     });
   },
 });

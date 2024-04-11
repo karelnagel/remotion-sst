@@ -1,7 +1,6 @@
 .sst/
 node_modules/
-remotion-example/
-client/
+example/
 
 sst.config.ts
 sst-env.d.ts
