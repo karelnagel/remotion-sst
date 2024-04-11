@@ -13,10 +13,10 @@ npm install remotion-sst
 ```ts
 // sst.config.ts
 const remotion = new RemotionLambda("Remotion", {
-    path: "remotion-example",
+    path: "packages/remotion",
 });
 new sst.aws.Astro("Client", {
-    path: "client",
+    path: "packages/client",
     link: [remotion]
 });
 ```

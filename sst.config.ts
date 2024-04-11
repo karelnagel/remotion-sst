@@ -18,8 +18,8 @@ export default $config({
       path: "remotion-example",
       forceDestroy: true,
     });
-    new sst.aws.Astro("Client", {
-      path: "client",
+    new sst.aws.Astro("Example", {
+      path: "example",
       link: [remotion],
     });
   },

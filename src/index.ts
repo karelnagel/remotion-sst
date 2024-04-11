@@ -49,9 +49,9 @@ type RemotionLambdaConfig = {
  * ```ts
  * import { RemotionLambda } from "remotion-sst";
  *
- * const remotion = new RemotionLambda("Remotion", { path: "remotion" });
+ * const remotion = new RemotionLambda("Remotion", { path: "packages/remotion" });
  *
- * new Astro("Client", { path: "client", link: [remotion]})
+ * new Astro("Client", { path: "packages/client", link: [remotion]})
  * ```
  */
 export class RemotionLambda extends pulumi.ComponentResource {
