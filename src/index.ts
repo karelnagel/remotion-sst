@@ -4,8 +4,6 @@ import { hostedLayers } from "./hosted-layers";
 import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
-// Todo: probably not the best place to import this
-import { Link } from "../.sst/platform/src/components";
 
 type RemotionLambdaConfig = {
   path: string;
@@ -16,7 +14,7 @@ type RemotionLambdaConfig = {
   memorySizeInMb?: number;
 };
 
-export class RemotionLambda extends pulumi.ComponentResource implements Link.Linkable, Link.AWS.Linkable {
+export class RemotionLambda extends pulumi.ComponentResource {
   public bucket: aws.s3.Bucket;
   public function: aws.lambda.Function;
   public siteUrl: pulumi.Output<string>;
@@ -248,7 +246,7 @@ export class RemotionLambda extends pulumi.ComponentResource implements Link.Lin
 
     this.registerOutputs({});
   }
-  getSSTLink(): Link.Definition {
+  getSSTLink() {
     return {
       properties: {
         functionName: this.function.name,
@@ -258,7 +256,7 @@ export class RemotionLambda extends pulumi.ComponentResource implements Link.Lin
     };
   }
 
-  getSSTAWSPermissions(): sst.aws.FunctionPermissionArgs[] {
+  getSSTAWSPermissions() {
     return this.permissions;
   }
 }

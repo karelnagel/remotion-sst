@@ -6,7 +6,7 @@ export default $config({
   app: (input) => {
     return {
       name: "pulumi-remotion",
-      removal: input?.stage === "production" ? "retain" : "remove",
+      removal: "remove",
       home: "aws",
       providers: {
         aws: { region: "eu-central-1" },
