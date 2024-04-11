@@ -116,15 +116,23 @@ export class RemotionLambda extends pulumi.ComponentResource {
     const resolvedPath = path.join(process.cwd(), sitePath);
     execSync(`cd ${resolvedPath} && ${bundleCommand || "npx remotion bundle"}`);
 
-    fs.readdirSync(`${resolvedPath}/build`).forEach((file, i) => {
+    const files = fs
+      .readdirSync(`${resolvedPath}/build`, { withFileTypes: true, recursive: true })
+      .filter((dirent) => dirent.isFile())
+      .map((dirent) => ({
+        path: `${dirent.path}/${dirent.name}`,
+        key: `${dirent.path}/${dirent.name}`.replace(`${resolvedPath}/build/`, ""),
+      }));
+
+    files.forEach((file, i) => {
       new aws.s3.BucketObject(
         `${name}File${i}`,
         {
           bucket: this.bucket.bucket,
-          source: new pulumi.asset.FileAsset(`${resolvedPath}/build/${file}`),
-          key: file,
+          source: new pulumi.asset.FileAsset(file.path),
+          key: file.key,
           acl: "public-read",
-          contentType: this.getContentType(file),
+          contentType: this.getContentType(file.key),
         },
         {
           parent: this,
