@@ -15,7 +15,7 @@ export default $config({
   },
   run: async () => {
     const remotion = new RemotionLambda("Remotion", {
-      path: "remotion-example",
+      path: "example",
       forceDestroy: true,
     });
     new sst.aws.Astro("Example", {
