@@ -1,10 +1,17 @@
 # Pulumi Remotion Lambda
 
-Easy to deploy Remotion Lambda with Pulumi/SST in a few lines of code and after use that with a client.
+The easiest way to deploy Remotion Lambda to SST and use in your applications.
+
+## Installation
+
+```
+npm install pulumi-remotion-lambda
+```
 
 ## Usage 
 
 ```ts
+// sst.config.ts
 const remotion = new RemotionLambda("Remotion", {
     path: "remotion-example",
 });
@@ -14,7 +21,16 @@ new sst.aws.Astro("Client", {
 });
 ```
 
-## Todo
-- custom domains for lambda, like SST does for every FE stack
-- everything in bucket is public
-- the first deploy fails rn bc bucket isn't ready yet, so you need to run deploy twice at first
+```ts
+// render.ts
+import { Resource } from "sst";
+
+const res = await renderMediaOnLambda({
+    functionName: Resource.Remotion.functionName,
+    serveUrl: Resource.Remotion.siteUrl,
+    forceBucketName: Resource.Remotion.bucketName,
+    region: Resource.Remotion.region,
+    composition: "HelloWorld",
+    codec: "h264",
+});
+```
