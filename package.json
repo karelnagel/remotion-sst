@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "workspaces": [
     "remotion-example",
-    "client"
+    "example"
   ],
   "repository": {
     "type": "git",

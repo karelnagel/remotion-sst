@@ -60,6 +60,10 @@ export class RemotionLambda extends pulumi.ComponentResource {
   public siteUrl: pulumi.Output<string>;
   public permissions: { actions: string[]; resources: pulumi.Input<string>[] }[];
 
+  private bucketOwnershipControls: aws.s3.BucketOwnershipControls;
+  private bucketPublicAccessBlock: aws.s3.BucketPublicAccessBlock;
+  private bucketAclV2: aws.s3.BucketAclV2;
+
   constructor(name: string, args: RemotionLambdaConfig, opts?: pulumi.ComponentResourceOptions) {
     super("pkg:index:RemotionLambda", name, args, opts);
 
@@ -71,36 +75,34 @@ export class RemotionLambda extends pulumi.ComponentResource {
   }
 
   private createBucket(name: string, args: RemotionLambdaConfig) {
-    const bucket = new aws.s3.Bucket(
-      `${name}Bucket`,
-      { forceDestroy: args.forceDestroy, website: { indexDocument: "index.html" } },
-      { parent: this }
-    );
+    this.bucket = new aws.s3.Bucket(`${name}Bucket`, { forceDestroy: args.forceDestroy, website: { indexDocument: "index.html" } }, { parent: this });
 
-    new aws.s3.BucketOwnershipControls(
+    this.bucketOwnershipControls = new aws.s3.BucketOwnershipControls(
       `${name}BucketOwnershipControls`,
       {
-        bucket: bucket.id,
+        bucket: this.bucket.id,
         rule: { objectOwnership: "BucketOwnerPreferred" },
       },
-      { parent: this, dependsOn: [bucket] }
+      { parent: this, dependsOn: [this.bucket] }
     );
 
-    new aws.s3.BucketPublicAccessBlock(
+    this.bucketPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(
       `${name}BucketPublicAccessBlock`,
       {
-        bucket: bucket.id,
+        bucket: this.bucket.id,
         blockPublicAcls: false,
         blockPublicPolicy: false,
         ignorePublicAcls: false,
         restrictPublicBuckets: false,
       },
-      { parent: this, dependsOn: [bucket] }
+      { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls] }
     );
 
-    new aws.s3.BucketAclV2(`${name}BucketAclV2`, { bucket: bucket.id, acl: "public-read" }, { parent: this, dependsOn: [bucket] });
-
-    this.bucket = bucket;
+    this.bucketAclV2 = new aws.s3.BucketAclV2(
+      `${name}BucketAclV2`,
+      { bucket: this.bucket.id, acl: "public-read" },
+      { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls, this.bucketPublicAccessBlock] }
+    );
   }
 
   private uploadSiteContent(name: string, sitePath: string, bundleCommand?: string) {
@@ -117,7 +119,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
           acl: "public-read",
           contentType: this.getContentType(file),
         },
-        { parent: this, dependsOn: [this.bucket] }
+        { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls, this.bucketPublicAccessBlock, this.bucketAclV2] }
       );
     });
   }
@@ -176,13 +178,11 @@ export class RemotionLambda extends pulumi.ComponentResource {
               Effect: "Allow",
             },
             {
-              Sid: "3",
               Effect: "Allow",
               Action: ["logs:CreateLogGroup"],
               Resource: ["arn:aws:logs:*:*:log-group:/aws/lambda-insights"],
             },
             {
-              Sid: "4",
               Effect: "Allow",
               Action: ["logs:CreateLogStream", "logs:PutLogEvents"],
               Resource: [
