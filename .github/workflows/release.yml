@@ -16,19 +16,9 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-      - name: Check for version changes
-        id: version_check
-        run: |
-          if git diff HEAD^ HEAD -- package.json | grep '"version":'; then
-            echo "::set-output name=changed::true"
-          else
-            echo "::set-output name=changed::false"
-          fi
       - name: Install dependencies
-        if: steps.version_check.outputs.changed == 'true'
         run: npm ci
       - name: Publish to npm
-        if: steps.version_check.outputs.changed == 'true'
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
