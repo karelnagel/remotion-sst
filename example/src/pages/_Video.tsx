@@ -76,7 +76,7 @@ export const Video = () => {
               onChange={(e) => setFramework(e.target.value)}
             >
               {FRAMEWORKS.map((f) => (
-                <option value={f}>{f}</option>
+                <option key={f} value={f}>{f}</option>
               ))}
             </select>
           </label>
