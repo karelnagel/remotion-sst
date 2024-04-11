@@ -28,4 +28,4 @@ jobs:
         run: curl -fsSL https://ion.sst.dev/install | bash
 
       - name: Deploy SST app
-        run: /home/runner/.sst/bin/sst deploy --stage=main
+        run: NO_BUN=true /home/runner/.sst/bin/sst deploy --stage=main

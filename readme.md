@@ -10,6 +10,8 @@ npm install remotion-sst
 
 ## Usage
 
+See the [example](./example) for a full example, it's also deployed [here](https://remotion-sst.asius.ai/).
+
 ```ts
 // sst.config.ts
 const remotion = new RemotionLambda("Remotion", {

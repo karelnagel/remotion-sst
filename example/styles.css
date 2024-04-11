@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-progress::-moz-progress-bar { @apply bg-blue-500 rounded-full; }
-progress::-webkit-progress-value {  @apply bg-blue-500 rounded-full; }
-progress {  @apply bg-blue-500 rounded-full; }
-
+progress::-moz-progress-bar {
+  @apply rounded-full bg-blue-500;
+}
+progress::-webkit-progress-value {
+  @apply rounded-full bg-blue-500;
+}
+progress {
+  @apply rounded-full bg-blue-500;
+}
