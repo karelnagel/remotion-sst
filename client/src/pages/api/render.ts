@@ -6,11 +6,10 @@ export const POST: APIRoute = async () => {
   const res = await renderMediaOnLambda({
     functionName: Resource.Remotion.functionName,
     serveUrl: Resource.Remotion.siteUrl,
+    forceBucketName: Resource.Remotion.bucketName,
     composition: "HelloWorld",
     codec: "h264",
-    privacy: "no-acl",
-    region: "eu-central-1",
-    forceBucketName: Resource.Remotion.bucketName,
+    region: Resource.Remotion.region as any,
   });
 
   while (true) {
@@ -19,7 +18,7 @@ export const POST: APIRoute = async () => {
       renderId: res.renderId,
       bucketName: Resource.Remotion.bucketName,
       functionName: Resource.Remotion.functionName,
-      region: "eu-central-1",
+      region: Resource.Remotion.region as any,
     });
 
     if (progress.done)
