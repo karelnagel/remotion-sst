@@ -1,5 +1,5 @@
 {
-  "name": "pulumi-remotion-lambda",
+  "name": "remotion-sst",
   "version": "0.0.7",
   "main": "src/index.ts",
   "workspaces": [
@@ -8,7 +8,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/karelnagel/pulumi-remotion-lambda.git"
+    "url": "https://github.com/karelnagel/remotion-sst.git"
   },
   "dependencies": {
     "@pulumi/aws": "^6.27.0",

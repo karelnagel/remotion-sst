@@ -5,7 +5,7 @@ import { RemotionLambda } from "./src";
 export default $config({
   app: (input) => {
     return {
-      name: "pulumi-remotion",
+      name: "remotion-sst",
       removal: "remove",
       home: "aws",
       providers: {

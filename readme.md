@@ -1,11 +1,11 @@
-# Pulumi Remotion Lambda
+# Remotion SST
 
-The easiest way to deploy Remotion Lambda to SST and use in your applications.
+The easiest way to deploy Remotion Lambda to AWS with SST/Pulumi and use in your applications.
 
 ## Installation
 
 ```
-npm install pulumi-remotion-lambda
+npm install remotion-sst
 ```
 
 ## Usage 
