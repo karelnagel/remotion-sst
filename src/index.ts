@@ -11,17 +11,17 @@ type RemotionLambdaConfig = {
    */
   path: string;
   /**
+   * Bundle command to run. You can specify the entrypoint, config, public dir and out dir with this.
+   * @see https://www.remotion.dev/docs/cli/bundle
+   * @default "npx remotion bundle"
+   */
+  bundleCommand?: string;
+  /**
    * Whether to force destroy the bucket when deleting the stack. default: false
    *
    * @default false
    */
   forceDestroy?: boolean;
-  /**
-   * The command to bundle the site. default: npx remotion bundle
-   *
-   * @default npx remotion bundle
-   */
-  bundleCommand?: string;
   /**
    * The amount of ephemeral storage to allocate for the function. default: 2048
    *

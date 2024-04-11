@@ -3,7 +3,6 @@
   "version": "0.0.7",
   "main": "src/index.ts",
   "workspaces": [
-    "remotion-example",
     "example"
   ],
   "scripts": {
@@ -16,10 +15,14 @@
   "dependencies": {
     "@pulumi/aws": "^6.27.0",
     "@pulumi/pulumi": "^3.111.1",
-    "@remotion/lambda": "4.0.130",
+    "prettier": "^3.2.5",
     "prettier-plugin-astro": "^0.13.0",
     "prettier-plugin-tailwindcss": "^0.5.13",
-    "remotion": "4.0.130",
+    "remotion": "4.0.140",
     "sst": "^3.0.13"
+  },
+  "peerDependencies": {
+    "@remotion/cli": "^4.0.140",
+    "@remotion/lambda": "^4.0.140"
   }
 }
