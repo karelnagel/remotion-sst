@@ -9,11 +9,9 @@ type RemotionLambdaConfig = {
   path: string;
   forceDestroy?: boolean;
   bundleCommand?: string;
-  function: {
-    ephemerealStorageInMb: number;
-    timeoutInSeconds: number;
-    memorySizeInMb: number;
-  };
+  ephemerealStorageInMb?: number;
+  timeoutInSeconds?: number;
+  memorySizeInMb?: number;
 };
 
 export class RemotionLambda extends pulumi.ComponentResource {
@@ -114,11 +112,11 @@ export class RemotionLambda extends pulumi.ComponentResource {
         architectures: ["arm64"],
         code: new pulumi.asset.FileArchive(zipPath),
         description: "Renders a Remotion video",
-        timeout: args.function.timeoutInSeconds,
-        memorySize: args.function.memorySizeInMb,
+        timeout: args.timeoutInSeconds || 120,
+        memorySize: args.memorySizeInMb || 2048,
         layers: aws.getRegion().then((region) => hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`)),
         ephemeralStorage: {
-          size: args.function.ephemerealStorageInMb,
+          size: args.ephemerealStorageInMb || 2048,
         },
       },
       { parent: this }
@@ -247,5 +245,18 @@ export class RemotionLambda extends pulumi.ComponentResource {
     ];
 
     this.registerOutputs({});
+  }
+  getSSTLink() {
+    return {
+      properties: {
+        functionName: this.function.name,
+        bucketName: this.bucket.bucket,
+        siteUrl: this.siteUrl,
+      },
+    };
+  }
+
+  getSSTAWSPermissions() {
+    return this.permissions;
   }
 }
