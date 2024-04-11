@@ -1,9 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 import type { RenderProgress } from "@remotion/lambda/client";
+import { Player } from "@remotion/player";
+import { MyComposition } from "../../remotion/Composition";
+import { DURATION_IN_FRAMES, FPS, HEIGHT, WIDTH } from "../../remotion/Root";
+import { Sparkles } from "lucide-react";
 
 const FRAMEWORKS = ["Astro", "Nextjs", "Remix", "SolidStart", "StaticSite"];
-const COLORS = ["#FF0000", "#00FF00", "#0000FF", "#FF00FF", "#00FFFF", "#FF00FF"];
 
 const render = async (data: { framework: string; color: string }) => {
   const res = await axios.post<{ renderId: string }>("/api/render", data);
@@ -17,7 +20,7 @@ const getProgress = async (renderId: string) => {
 
 export const Video = () => {
   const [framework, setFramework] = useState(FRAMEWORKS[0]);
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState("#0e7ce3");
   const [status, setStatus] = useState<"idle" | "rendering" | "done" | "error">("idle");
   const [url, setUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -43,7 +46,7 @@ export const Video = () => {
   };
   return (
     <div>
-      <form onSubmit={onSubmit} className="flex flex-col gap-2 text-center">
+      <form onSubmit={onSubmit} className="flex flex-col gap-2 ">
         {progress !== null && (
           <progress
             value={progress}
@@ -52,26 +55,47 @@ export const Video = () => {
           />
         )}
         {/* Todo video */}
-        <select
-          value={framework}
-          className="rounded-md border bg-transparent p-2 px-4"
-          onChange={(e) => setFramework(e.target.value)}
-        >
-          {FRAMEWORKS.map((f) => (
-            <option value={f}>{f}</option>
-          ))}
-        </select>
-        <input
-          className="w-full rounded-md border bg-transparent p-0 px-4"
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
+        <Player
+          style={{ width: "100%" }}
+          component={MyComposition}
+          compositionHeight={HEIGHT}
+          compositionWidth={WIDTH}
+          durationInFrames={DURATION_IN_FRAMES}
+          fps={FPS}
+          inputProps={{ framework, color }}
+          controls
+          loop
+          autoPlay
         />
+        <div className="grid grid-cols-2 gap-4">
+          <label className="flex flex-col gap-1">
+            Your preffered framework
+            <select
+              value={framework}
+              className="rounded-md border bg-transparent p-2 px-4"
+              onChange={(e) => setFramework(e.target.value)}
+            >
+              {FRAMEWORKS.map((f) => (
+                <option value={f}>{f}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            Your favourite color
+            <input
+              className="h-full w-full rounded-md border bg-transparent p-0 px-4"
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+            />
+          </label>
+        </div>
 
         <button
-          className="rounded-md bg-blue-500 p-2 px-4 text-white"
+          className="flex items-center justify-center gap-2 rounded-md bg-blue-500 p-2 px-4 text-white"
           disabled={status === "rendering"}
         >
+          <Sparkles />
           {status === "rendering" ? "Rendering..." : "Render Video"}
         </button>
 

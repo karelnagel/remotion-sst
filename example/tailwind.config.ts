@@ -6,7 +6,12 @@ const config: Config = {
     "./remotion/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        remotion: "#0e7ce3",
+        sst: "#e27152",
+      },
+    },
   },
   plugins: [],
 };

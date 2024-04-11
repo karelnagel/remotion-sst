@@ -4,6 +4,8 @@ import "../styles.css";
 
 export const FPS = 30;
 export const DURATION_IN_FRAMES = 240;
+export const HEIGHT = 720;
+export const WIDTH = 1280;
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -13,13 +15,12 @@ export const RemotionRoot: React.FC = () => {
         component={MyComposition}
         durationInFrames={DURATION_IN_FRAMES}
         fps={FPS}
-        width={1280}
-        height={720}
+        width={WIDTH}
+        height={HEIGHT}
         schema={myCompSchema}
         defaultProps={{
-          titleText: "Welcome to Remotion with Tailwind CSS",
-          titleColor: "#000000",
-          logoColor: "#00bfff",
+          color: "#0e7ce3",
+          framework: "Astro",
         }}
       />
     </>

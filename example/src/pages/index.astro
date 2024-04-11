@@ -14,7 +14,7 @@ import "../../styles.css";
   </head>
   <body class="bg-[#1b1b1d] text-white h-screen w-screen flex items-center">
     <main class="max-w-screen-xl mx-auto w-full grid md:grid-cols-2 gap-6 px-4">
-      <div class="flex flex-col gap-4 items-start">
+      <div class="flex flex-col gap-4 items-start justify-center">
         <h1 class="text-5xl font-bold">Remotion SST</h1>
         <p>
           The easiest way to deploy Remotion Lambda to AWS with SST/Pulumi and use in your
@@ -24,7 +24,7 @@ import "../../styles.css";
           <a
             href="https://github.com/karelnagel/remotion-sst"
             target="_blank"
-            class="bg-blue-500 p-2 px-4 rounded-md"
+            class="bg-sst p-2 px-4 rounded-md"
           >
             GitHub
           </a>
@@ -44,19 +44,3 @@ import "../../styles.css";
     </main>
   </body>
 </html>
-<!-- <script>
-  const btn = document.querySelector("button");
-  btn!.addEventListener("click", async () => {
-    const res = await fetch("/api/render", { method: "POST" });
-
-    const data = await res.json();
-    console.log(data);
-    const result = document.querySelector("#result") as HTMLDivElement;
-    result!.textContent = JSON.stringify(data, null, 2);
-
-    const src = data.outputFile;
-    const video = document.querySelector("#video") as HTMLVideoElement;
-    video!.src = src;
-    video!.play();
-  });
-</script> -->
