@@ -6,14 +6,54 @@ import { execSync } from "child_process";
 import path from "path";
 
 type RemotionLambdaConfig = {
+  /**
+   * The path to the Remotion site.
+   */
   path: string;
+  /**
+   * Whether to force destroy the bucket when deleting the stack. default: false
+   *
+   * @default false
+   */
   forceDestroy?: boolean;
+  /**
+   * The command to bundle the site. default: npx remotion bundle
+   *
+   * @default npx remotion bundle
+   */
   bundleCommand?: string;
+  /**
+   * The amount of ephemeral storage to allocate for the function. default: 2048
+   *
+   * @default 2048
+   */
   ephemerealStorageInMb?: number;
+  /**
+   * The timeout for the function. default: 120
+   *
+   * @default 120
+   */
   timeoutInSeconds?: number;
+  /**
+   * The memory size for the function. default: 2048
+   *
+   * @default 2048
+   */
   memorySizeInMb?: number;
 };
 
+/**
+ * A SST/Pulumi component that deploys Remotion lambda function to AWS.
+ *
+ * @example
+ * ```ts
+ * import { RemotionLambda } from "remotion-sst";
+ *
+ * const remotion = new RemotionLambda("Remotion", { path: "remotion" });
+ *
+ * new Astro("Client", { path: "client", link: [remotion]})
+ * ```
+ */
 export class RemotionLambda extends pulumi.ComponentResource {
   public bucket: aws.s3.Bucket;
   public function: aws.lambda.Function;
@@ -22,75 +62,80 @@ export class RemotionLambda extends pulumi.ComponentResource {
 
   constructor(name: string, args: RemotionLambdaConfig, opts?: pulumi.ComponentResourceOptions) {
     super("pkg:index:RemotionLambda", name, args, opts);
-    // Creating bucket
-    this.bucket = new aws.s3.Bucket(
-      name + "Bucket",
-      {
-        forceDestroy: args.forceDestroy,
-        website: { indexDocument: "index.html" },
-      },
+
+    this.createBucket(name, args);
+    this.uploadSiteContent(name, args.path, args.bundleCommand);
+    this.createLambdaFunction(name, args);
+    this.definePermissions();
+    this.siteUrl = pulumi.interpolate`https://${this.bucket.bucket}.s3.${this.bucket.region}.amazonaws.com/index.html`;
+  }
+
+  private createBucket(name: string, args: RemotionLambdaConfig) {
+    const bucket = new aws.s3.Bucket(
+      `${name}Bucket`,
+      { forceDestroy: args.forceDestroy, website: { indexDocument: "index.html" } },
       { parent: this }
     );
 
-    const bucketOwnershipControls = new aws.s3.BucketOwnershipControls(name + "BucketOwnershipControls", {
-      bucket: this.bucket.id,
-      rule: { objectOwnership: "BucketOwnerPreferred" },
-    });
-    const bucketPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(name + "BucketPublicAccessBlock", {
-      bucket: this.bucket.id,
-      blockPublicAcls: false,
-      blockPublicPolicy: false,
-      ignorePublicAcls: false,
-      restrictPublicBuckets: false,
-    });
-    const bucketAcl = new aws.s3.BucketAclV2(
-      name + "BucketAclV2",
-      { bucket: this.bucket.id, acl: "public-read" },
-      { dependsOn: [bucketOwnershipControls, bucketPublicAccessBlock] }
+    new aws.s3.BucketOwnershipControls(
+      `${name}BucketOwnershipControls`,
+      {
+        bucket: bucket.id,
+        rule: { objectOwnership: "BucketOwnerPreferred" },
+      },
+      { parent: this, dependsOn: [bucket] }
     );
 
-    // Bundling and uploading
-    const sitePath = path.join(process.cwd(), args.path);
-    const bundleCommand = args.bundleCommand || "npx remotion bundle";
-    execSync(`cd ${sitePath} && ${bundleCommand}`);
+    new aws.s3.BucketPublicAccessBlock(
+      `${name}BucketPublicAccessBlock`,
+      {
+        bucket: bucket.id,
+        blockPublicAcls: false,
+        blockPublicPolicy: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false,
+      },
+      { parent: this, dependsOn: [bucket] }
+    );
 
-    const bundlePath = `${sitePath}/build`;
-    const files = fs.readdirSync(bundlePath);
-    for (const [i, file] of files.entries()) {
+    new aws.s3.BucketAclV2(`${name}BucketAclV2`, { bucket: bucket.id, acl: "public-read" }, { parent: this, dependsOn: [bucket] });
+
+    this.bucket = bucket;
+  }
+
+  private uploadSiteContent(name: string, sitePath: string, bundleCommand?: string) {
+    const resolvedPath = path.join(process.cwd(), sitePath);
+    execSync(`cd ${resolvedPath} && ${bundleCommand || "npx remotion bundle"}`);
+
+    fs.readdirSync(`${resolvedPath}/build`).forEach((file, i) => {
       new aws.s3.BucketObject(
-        name + "File" + i,
+        `${name}File${i}`,
         {
           bucket: this.bucket.bucket,
-          source: new pulumi.asset.FileAsset(bundlePath + "/" + file),
+          source: new pulumi.asset.FileAsset(`${resolvedPath}/build/${file}`),
           key: file,
           acl: "public-read",
-          contentType: file.endsWith(".html")
-            ? "text/html"
-            : file.endsWith(".css")
-            ? "text/css"
-            : file.endsWith(".js")
-            ? "application/javascript"
-            : "application/octet-stream",
+          contentType: this.getContentType(file),
         },
-        { parent: this, dependsOn: [this.bucket, bucketAcl, bucketOwnershipControls, bucketPublicAccessBlock] }
+        { parent: this, dependsOn: [this.bucket] }
       );
-    }
+    });
+  }
 
-    // Creating function
+  private getContentType(fileName: string) {
+    if (fileName.endsWith(".html")) return "text/html";
+    if (fileName.endsWith(".css")) return "text/css";
+    if (fileName.endsWith(".js")) return "application/javascript";
+    return "application/octet-stream";
+  }
+
+  private createLambdaFunction(name: string, args: RemotionLambdaConfig) {
     const role = new aws.iam.Role(
-      name + "Role",
+      `${name}Role`,
       {
         assumeRolePolicy: JSON.stringify({
           Version: "2012-10-17",
-          Statement: [
-            {
-              Effect: "Allow",
-              Principal: {
-                Service: "lambda.amazonaws.com",
-              },
-              Action: "sts:AssumeRole",
-            },
-          ],
+          Statement: [{ Effect: "Allow", Principal: { Service: "lambda.amazonaws.com" }, Action: "sts:AssumeRole" }],
         }),
       },
       { parent: this }
@@ -98,7 +143,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
 
     const zipPath = path.join(process.cwd(), "node_modules", "@remotion/lambda", "remotionlambda-arm64.zip");
     this.function = new aws.lambda.Function(
-      name + "Function",
+      `${name}Function`,
       {
         role: role.arn,
         runtime: "nodejs18.x",
@@ -109,45 +154,26 @@ export class RemotionLambda extends pulumi.ComponentResource {
         timeout: args.timeoutInSeconds || 120,
         memorySize: args.memorySizeInMb || 2048,
         layers: aws.getRegion().then((region) => hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`)),
-        ephemeralStorage: {
-          size: args.ephemerealStorageInMb || 2048,
-        },
+        ephemeralStorage: { size: args.ephemerealStorageInMb || 2048 },
       },
       { parent: this }
     );
 
     const policy = new aws.iam.Policy(
-      name + "Policy",
+      `${name}Policy`,
       {
         policy: {
           Version: "2012-10-17",
           Statement: [
             {
-              Sid: "0",
+              Action: ["s3:*"],
+              Resource: [pulumi.interpolate`${this.bucket.arn}/*`],
               Effect: "Allow",
-              Action: ["s3:ListAllMyBuckets"],
-              Resource: ["*"],
             },
             {
-              Sid: "1",
-              Effect: "Allow",
-              Action: [
-                "s3:CreateBucket",
-                "s3:ListBucket",
-                "s3:PutBucketAcl",
-                "s3:GetObject",
-                "s3:DeleteObject",
-                "s3:PutObjectAcl",
-                "s3:PutObject",
-                "s3:GetBucketLocation",
-              ],
-              Resource: [pulumi.interpolate`${this.bucket.arn}*`],
-            },
-            {
-              Sid: "2",
-              Effect: "Allow",
-              Action: ["lambda:InvokeFunction"],
+              Action: ["lambda:*"],
               Resource: [this.function.arn],
+              Effect: "Allow",
             },
             {
               Sid: "3",
@@ -170,71 +196,21 @@ export class RemotionLambda extends pulumi.ComponentResource {
       { parent: this }
     );
     new aws.iam.PolicyAttachment(name + "RolePolicyAttachment", { policyArn: policy.arn, roles: [role.name] }, { parent: this });
+  }
 
-    this.siteUrl = pulumi.interpolate`https://${this.bucket.bucket}.s3.${this.bucket.region}.amazonaws.com/index.html`;
-
+  private definePermissions() {
     this.permissions = [
       {
-        actions: [
-          "servicequotas:GetServiceQuota",
-          "servicequotas:GetAWSDefaultServiceQuota",
-          "servicequotas:RequestServiceQuotaIncrease",
-          "servicequotas:ListRequestedServiceQuotaChangeHistoryByQuota",
-        ],
-        resources: ["*"],
-      },
-      {
-        actions: ["iam:SimulatePrincipalPolicy"],
-        resources: ["*"],
-      },
-      {
-        actions: ["iam:PassRole"],
-        resources: [role.arn],
-      },
-      {
-        actions: [
-          "s3:GetObject",
-          "s3:DeleteObject",
-          "s3:PutObjectAcl",
-          "s3:PutObject",
-          "s3:CreateBucket",
-          "s3:ListBucket",
-          "s3:GetBucketLocation",
-          "s3:PutBucketAcl",
-          "s3:DeleteBucket",
-          "s3:PutBucketOwnershipControls",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutLifecycleConfiguration",
-        ],
+        actions: ["s3:*"],
         resources: [pulumi.interpolate`${this.bucket.arn}/*`],
       },
       {
-        actions: ["s3:ListAllMyBuckets"],
-        resources: ["*"],
-      },
-      {
-        actions: ["lambda:ListFunctions", "lambda:GetFunction"],
-        resources: ["*"],
-      },
-      {
-        actions: [
-          "lambda:InvokeAsync",
-          "lambda:InvokeFunction",
-          "lambda:CreateFunction",
-          "lambda:DeleteFunction",
-          "lambda:PutFunctionEventInvokeConfig",
-          "lambda:PutRuntimeManagementConfig",
-          "lambda:TagResource",
-        ],
+        actions: ["lambda:*"],
         resources: [this.function.arn],
       },
       {
-        actions: ["logs:CreateLogGroup", "logs:PutRetentionPolicy"],
+        actions: ["logs:*"],
         resources: [pulumi.interpolate`arn:aws:logs:*:*:log-group:/aws/lambda/${this.function.name}`],
-      },
-      {
-        actions: ["lambda:GetLayerVersion"],
-        resources: ["arn:aws:lambda:*:678892195805:layer:remotion-binaries-*", "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension*"],
       },
     ];
   }
