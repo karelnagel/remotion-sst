@@ -6,6 +6,9 @@
     "remotion-example",
     "example"
   ],
+  "scripts": {
+    "format": "prettier --write ."
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/karelnagel/remotion-sst.git"
@@ -14,6 +17,8 @@
     "@pulumi/aws": "^6.27.0",
     "@pulumi/pulumi": "^3.111.1",
     "@remotion/lambda": "4.0.130",
+    "prettier-plugin-astro": "^0.13.0",
+    "prettier-plugin-tailwindcss": "^0.5.13",
     "remotion": "4.0.130",
     "sst": "^3.0.13"
   }

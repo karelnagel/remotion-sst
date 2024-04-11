@@ -13,7 +13,12 @@ export const myCompSchema = z.object({
   logoColor2: zColor(),
 });
 
-export const HelloWorld: React.FC<z.infer<typeof myCompSchema>> = ({ titleText: propOne, titleColor: propTwo, logoColor1, logoColor2 }) => {
+export const HelloWorld: React.FC<z.infer<typeof myCompSchema>> = ({
+  titleText: propOne,
+  titleColor: propTwo,
+  logoColor1,
+  logoColor2,
+}) => {
   const frame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
 

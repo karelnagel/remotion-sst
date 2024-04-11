@@ -75,7 +75,11 @@ export class RemotionLambda extends pulumi.ComponentResource {
   }
 
   private createBucket(name: string, args: RemotionLambdaConfig) {
-    this.bucket = new aws.s3.Bucket(`${name}Bucket`, { forceDestroy: args.forceDestroy, website: { indexDocument: "index.html" } }, { parent: this });
+    this.bucket = new aws.s3.Bucket(
+      `${name}Bucket`,
+      { forceDestroy: args.forceDestroy, website: { indexDocument: "index.html" } },
+      { parent: this },
+    );
 
     this.bucketOwnershipControls = new aws.s3.BucketOwnershipControls(
       `${name}BucketOwnershipControls`,
@@ -83,7 +87,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
         bucket: this.bucket.id,
         rule: { objectOwnership: "BucketOwnerPreferred" },
       },
-      { parent: this, dependsOn: [this.bucket] }
+      { parent: this, dependsOn: [this.bucket] },
     );
 
     this.bucketPublicAccessBlock = new aws.s3.BucketPublicAccessBlock(
@@ -95,13 +99,16 @@ export class RemotionLambda extends pulumi.ComponentResource {
         ignorePublicAcls: false,
         restrictPublicBuckets: false,
       },
-      { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls] }
+      { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls] },
     );
 
     this.bucketAclV2 = new aws.s3.BucketAclV2(
       `${name}BucketAclV2`,
       { bucket: this.bucket.id, acl: "public-read" },
-      { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls, this.bucketPublicAccessBlock] }
+      {
+        parent: this,
+        dependsOn: [this.bucket, this.bucketOwnershipControls, this.bucketPublicAccessBlock],
+      },
     );
   }
 
@@ -119,7 +126,15 @@ export class RemotionLambda extends pulumi.ComponentResource {
           acl: "public-read",
           contentType: this.getContentType(file),
         },
-        { parent: this, dependsOn: [this.bucket, this.bucketOwnershipControls, this.bucketPublicAccessBlock, this.bucketAclV2] }
+        {
+          parent: this,
+          dependsOn: [
+            this.bucket,
+            this.bucketOwnershipControls,
+            this.bucketPublicAccessBlock,
+            this.bucketAclV2,
+          ],
+        },
       );
     });
   }
@@ -137,13 +152,24 @@ export class RemotionLambda extends pulumi.ComponentResource {
       {
         assumeRolePolicy: JSON.stringify({
           Version: "2012-10-17",
-          Statement: [{ Effect: "Allow", Principal: { Service: "lambda.amazonaws.com" }, Action: "sts:AssumeRole" }],
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: { Service: "lambda.amazonaws.com" },
+              Action: "sts:AssumeRole",
+            },
+          ],
         }),
       },
-      { parent: this }
+      { parent: this },
     );
 
-    const zipPath = path.join(process.cwd(), "node_modules", "@remotion/lambda", "remotionlambda-arm64.zip");
+    const zipPath = path.join(
+      process.cwd(),
+      "node_modules",
+      "@remotion/lambda",
+      "remotionlambda-arm64.zip",
+    );
     this.function = new aws.lambda.Function(
       `${name}Function`,
       {
@@ -155,10 +181,14 @@ export class RemotionLambda extends pulumi.ComponentResource {
         description: "Renders a Remotion video",
         timeout: args.timeoutInSeconds || 120,
         memorySize: args.memorySizeInMb || 2048,
-        layers: aws.getRegion().then((region) => hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`)),
+        layers: aws
+          .getRegion()
+          .then((region) =>
+            hostedLayers[region.id].map(({ layerArn, version }) => `${layerArn}:${version}`),
+          ),
         ephemeralStorage: { size: args.ephemerealStorageInMb || 2048 },
       },
-      { parent: this }
+      { parent: this },
     );
 
     const policy = new aws.iam.Policy(
@@ -193,9 +223,13 @@ export class RemotionLambda extends pulumi.ComponentResource {
           ],
         },
       },
-      { parent: this }
+      { parent: this },
     );
-    new aws.iam.PolicyAttachment(name + "RolePolicyAttachment", { policyArn: policy.arn, roles: [role.name] }, { parent: this });
+    new aws.iam.PolicyAttachment(
+      name + "RolePolicyAttachment",
+      { policyArn: policy.arn, roles: [role.name] },
+      { parent: this },
+    );
   }
 
   private definePermissions() {
@@ -210,7 +244,9 @@ export class RemotionLambda extends pulumi.ComponentResource {
       },
       {
         actions: ["logs:*"],
-        resources: [pulumi.interpolate`arn:aws:logs:*:*:log-group:/aws/lambda/${this.function.name}`],
+        resources: [
+          pulumi.interpolate`arn:aws:logs:*:*:log-group:/aws/lambda/${this.function.name}`,
+        ],
       },
     ];
   }
