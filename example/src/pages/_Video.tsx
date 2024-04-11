@@ -8,7 +8,7 @@ import { Sparkles } from "lucide-react";
 
 const FRAMEWORKS = ["Astro", "Nextjs", "Remix", "SolidStart", "StaticSite"];
 
-const render = async (data: { framework: string; color: string }) => {
+const render = async (data: { framework: string; remotionPath: string }) => {
   const res = await axios.post<{ renderId: string }>("/api/render", data);
   return res.data.renderId;
 };
@@ -20,16 +20,15 @@ const getProgress = async (renderId: string) => {
 
 export const Video = () => {
   const [framework, setFramework] = useState(FRAMEWORKS[0]);
-  const [color, setColor] = useState("#0e7ce3");
+  const [remotionPath, setRemotionPath] = useState("packages/remotion");
   const [status, setStatus] = useState<"idle" | "rendering" | "done" | "error">("idle");
   const [url, setUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
 
   const onSubmit = async (e: any) => {
     e.preventDefault();
-    console.log(framework, color);
     setStatus("rendering");
-    const renderId = await render({ framework, color });
+    const renderId = await render({ framework, remotionPath });
 
     const interval = setInterval(async () => {
       const progress = await getProgress(renderId);
@@ -42,7 +41,7 @@ export const Video = () => {
         clearInterval(interval);
       }
       setProgress(progress.overallProgress);
-    }, 1000);
+    }, 3000);
   };
   return (
     <div>
@@ -54,7 +53,6 @@ export const Video = () => {
             max={1}
           />
         )}
-        {/* Todo video */}
         <Player
           style={{ width: "100%" }}
           component={MyComposition}
@@ -62,31 +60,32 @@ export const Video = () => {
           compositionWidth={WIDTH}
           durationInFrames={DURATION_IN_FRAMES}
           fps={FPS}
-          inputProps={{ framework, color }}
+          inputProps={{ framework, remotionPath }}
           controls
           loop
           autoPlay
         />
         <div className="grid grid-cols-2 gap-4">
           <label className="flex flex-col gap-1">
-            Your preffered framework
+            Your prefered framework
             <select
               value={framework}
               className="rounded-md border bg-transparent p-2 px-4"
               onChange={(e) => setFramework(e.target.value)}
             >
               {FRAMEWORKS.map((f) => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f}>
+                  {f}
+                </option>
               ))}
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            Your favourite color
+            Your Remotion video path
             <input
-              className="h-full w-full rounded-md border bg-transparent p-0 px-4"
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
+              className="h-full w-full rounded-md border bg-transparent p-2 px-4"
+              value={remotionPath}
+              onChange={(e) => setRemotionPath(e.target.value)}
             />
           </label>
         </div>

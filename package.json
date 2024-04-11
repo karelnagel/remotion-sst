@@ -6,7 +6,7 @@
     "example"
   ],
   "scripts": {
-    "dev": "cd example && npm run dev",
+    "dev": "sst dev",
     "format": "prettier --write ."
   },
   "repository": {

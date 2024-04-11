@@ -3,7 +3,7 @@ import { MyComposition, myCompSchema } from "./Composition";
 import "../styles.css";
 
 export const FPS = 30;
-export const DURATION_IN_FRAMES = 240;
+export const DURATION_IN_FRAMES = 180;
 export const HEIGHT = 720;
 export const WIDTH = 1280;
 
@@ -19,7 +19,7 @@ export const RemotionRoot: React.FC = () => {
         height={HEIGHT}
         schema={myCompSchema}
         defaultProps={{
-          color: "#0e7ce3",
+          remotionPath: "packages/remotion",
           framework: "Astro",
         }}
       />
