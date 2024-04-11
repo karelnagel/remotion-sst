@@ -4,25 +4,31 @@ import { useEffect, useState } from "react";
 import { HEIGHT, WIDTH } from "./Root";
 import { getHighlighterCore, type HighlighterCore } from "shiki/core";
 import loadWasm from "shiki/wasm";
-import nord from "shiki/themes/nord.mjs";
 import ts from "shiki/langs/typescript.mjs";
+import nord from "shiki/themes/nord.mjs";
+import andromeeda from "shiki/themes/andromeeda.mjs";
+import githubLight from "shiki/themes/github-light.mjs";
+import houston from "shiki/themes/houston.mjs";
 
 const highlighterPromise = getHighlighterCore({
-  themes: [nord],
+  themes: [nord, andromeeda, githubLight, houston],
   langs: [ts],
   loadWasm,
 });
 
+export const Theme = z.enum(["houston", "nord", "andromeeda", "github-light"]);
+export type Theme = z.infer<typeof Theme>;
+
 export const myCompSchema = z.object({
   framework: z.string(),
-  remotionPath: z.string().default("packages/remotion"),
+  theme: Theme,
 });
 
-const code = (framework: string, remotionPath: string) => `
+const code = (framework: string) => `
 import { RemotionLambda } from "remotion-sst";
 
 const remotion = new RemotionLambda("Remotion", {
-  path: "${remotionPath}",
+  path: "packages/remotion",
 });
 
 new sst.aws.${framework}("Client", {
@@ -31,18 +37,13 @@ new sst.aws.${framework}("Client", {
 });
 `;
 
-export const MyComposition: React.FC<z.infer<typeof myCompSchema>> = ({
-  framework,
-  remotionPath,
-}) => {
+export const MyComposition: React.FC<z.infer<typeof myCompSchema>> = ({ framework, theme }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
-  const text = code(framework, remotionPath);
+  const text = code(framework);
   const char = interpolate(frame, [0, durationInFrames - 40], [0, text.length]);
   const [highlighter, setHighlighter] = useState<HighlighterCore>();
-  useEffect(() => {
-    highlighterPromise.then(setHighlighter);
-  }, []);
+  useEffect(() => void highlighterPromise.then(setHighlighter), []);
   return (
     <AbsoluteFill className="items-center justify-center text-white">
       {highlighter && (
@@ -52,7 +53,7 @@ export const MyComposition: React.FC<z.infer<typeof myCompSchema>> = ({
           dangerouslySetInnerHTML={{
             __html: highlighter.codeToHtml(
               text.slice(0, char) + "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
-              { lang: "ts", theme: "nord" },
+              { lang: "ts", theme },
             ),
           }}
         />

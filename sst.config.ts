@@ -21,6 +21,7 @@ export default $config({
     new sst.aws.Astro("Example", {
       path: "example",
       link: [remotion],
+      domain: process.env.EXAMPLE_DOMAIN,
     });
   },
 });

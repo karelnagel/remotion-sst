@@ -2,13 +2,13 @@ import { useState } from "react";
 import axios from "axios";
 import type { RenderProgress } from "@remotion/lambda/client";
 import { Player } from "@remotion/player";
-import { MyComposition } from "../../remotion/Composition";
+import { MyComposition, Theme } from "../../remotion/Composition";
 import { DURATION_IN_FRAMES, FPS, HEIGHT, WIDTH } from "../../remotion/Root";
 import { Sparkles } from "lucide-react";
 
 const FRAMEWORKS = ["Astro", "Nextjs", "Remix", "SolidStart", "StaticSite"];
 
-const render = async (data: { framework: string; remotionPath: string }) => {
+const render = async (data: { framework: string; theme: Theme }) => {
   const res = await axios.post<{ renderId: string }>("/api/render", data);
   return res.data.renderId;
 };
@@ -20,7 +20,7 @@ const getProgress = async (renderId: string) => {
 
 export const Video = () => {
   const [framework, setFramework] = useState(FRAMEWORKS[0]);
-  const [remotionPath, setRemotionPath] = useState("packages/remotion");
+  const [theme, setTheme] = useState<Theme>(Theme.options[0]);
   const [status, setStatus] = useState<"idle" | "rendering" | "done" | "error">("idle");
   const [url, setUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -28,7 +28,7 @@ export const Video = () => {
   const onSubmit = async (e: any) => {
     e.preventDefault();
     setStatus("rendering");
-    const renderId = await render({ framework, remotionPath });
+    const renderId = await render({ framework, theme });
 
     const interval = setInterval(async () => {
       const progress = await getProgress(renderId);
@@ -60,7 +60,7 @@ export const Video = () => {
           compositionWidth={WIDTH}
           durationInFrames={DURATION_IN_FRAMES}
           fps={FPS}
-          inputProps={{ framework, remotionPath }}
+          inputProps={{ framework, theme }}
           controls
           loop
           autoPlay
@@ -80,18 +80,25 @@ export const Video = () => {
               ))}
             </select>
           </label>
+
           <label className="flex flex-col gap-1">
-            Your Remotion video path
-            <input
+            Select theme
+            <select
               className="h-full w-full rounded-md border bg-transparent p-2 px-4"
-              value={remotionPath}
-              onChange={(e) => setRemotionPath(e.target.value)}
-            />
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as Theme)}
+            >
+              {Theme.options.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 
         <button
-          className="flex items-center justify-center gap-2 rounded-md bg-blue-500 p-2 px-4 text-white"
+          className="flex items-center justify-center gap-2 rounded-md bg-blue-500 p-2 px-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
           disabled={status === "rendering"}
         >
           <Sparkles />

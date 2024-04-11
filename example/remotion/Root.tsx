@@ -1,5 +1,5 @@
 import { Composition } from "remotion";
-import { MyComposition, myCompSchema } from "./Composition";
+import { MyComposition, Theme, myCompSchema } from "./Composition";
 import "../styles.css";
 
 export const FPS = 30;
@@ -19,7 +19,7 @@ export const RemotionRoot: React.FC = () => {
         height={HEIGHT}
         schema={myCompSchema}
         defaultProps={{
-          remotionPath: "packages/remotion",
+          theme: Theme.options[0],
           framework: "Astro",
         }}
       />
