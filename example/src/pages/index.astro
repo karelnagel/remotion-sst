@@ -1,5 +1,6 @@
 ---
-import { Resource } from "sst";
+import { Copy } from "lucide-react";
+import { Video } from "./_Video";
 import "../../styles.css";
 ---
 
@@ -11,18 +12,39 @@ import "../../styles.css";
     <meta name="generator" content={Astro.generator} />
     <title>Remotion SST</title>
   </head>
-  <body>
-    <h1>Remotion SST</h1>
-    <div>
-      <p>site: {Resource.Remotion.siteUrl}</p>
-      <p>function: {Resource.Remotion.functionName}</p>
-      <button>render</button>
-      <video controls id="video"></video>
-      <div id="result"></div>
-    </div>
+  <body class="bg-[#1b1b1d] text-white h-screen w-screen flex items-center">
+    <main class="max-w-screen-xl mx-auto w-full grid md:grid-cols-2 gap-6 px-4">
+      <div class="flex flex-col gap-4 items-start">
+        <h1 class="text-5xl font-bold">Remotion SST</h1>
+        <p>
+          The easiest way to deploy Remotion Lambda to AWS with SST/Pulumi and use in your
+          applications.
+        </p>
+        <div class="flex gap-3 items-center">
+          <a
+            href="https://github.com/karelnagel/remotion-sst"
+            target="_blank"
+            class="bg-blue-500 p-2 px-4 rounded-md"
+          >
+            GitHub
+          </a>
+          <div class="bg-white/20 p-2 flex gap-4 px-4 items-center rounded-md">
+            <span class=""> npm install remotion-sst</span>
+            <Copy id="copy" className="cursor-pointer" />
+            <script>
+              const copy = document.querySelector("#copy");
+              copy!.addEventListener("click", () => {
+                navigator.clipboard.writeText("npm install remotion-sst");
+              });
+            </script>
+          </div>
+        </div>
+      </div>
+      <Video client:load />
+    </main>
   </body>
 </html>
-<script>
+<!-- <script>
   const btn = document.querySelector("button");
   btn!.addEventListener("click", async () => {
     const res = await fetch("/api/render", { method: "POST" });
@@ -37,4 +59,4 @@ import "../../styles.css";
     video!.src = src;
     video!.play();
   });
-</script>
+</script> -->

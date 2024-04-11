@@ -13,12 +13,6 @@ export const GET: APIRoute = async (Astro) => {
     region: Resource.Remotion.region as any,
   });
 
-  if (progress.fatalErrorEncountered)
-    return new Response(JSON.stringify(progress), {
-      headers: { "Content-Type": "application/json" },
-      status: 500,
-    });
-
   return new Response(JSON.stringify(progress), {
     headers: { "Content-Type": "application/json" },
   });
