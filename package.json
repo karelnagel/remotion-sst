@@ -1,6 +1,6 @@
 {
   "name": "remotion-sst",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "main": "src/index.ts",
   "workspaces": [
     "example"
@@ -25,7 +25,7 @@
     "sst": "^3.0.13"
   },
   "peerDependencies": {
-    "@remotion/cli": "^4.0.140",
-    "@remotion/lambda": "^4.0.140"
+    "@remotion/cli": "^4.0.0",
+    "@remotion/lambda": "^4.0.0"
   }
 }
