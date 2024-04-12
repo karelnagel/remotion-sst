@@ -10,7 +10,7 @@ npm install remotion-sst
 
 ## Usage
 
-See the [example](./example) for a full example, it's also deployed [here](https://remotion-sst.asius.ai/).
+See the [example](./example) (deployed [here](https://remotion-sst.asius.ai/)), or the [standalone example](https://github.com/karelnagel/remotion-sst-example) (another repo without all the library code)
 
 ```ts
 // sst.config.ts
