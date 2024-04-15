@@ -62,6 +62,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
 
   private bucketOwnershipControls: aws.s3.BucketOwnershipControls;
   private bucketPublicAccessBlock: aws.s3.BucketPublicAccessBlock;
+  private bucketLifecycleConfigV2: aws.s3.BucketLifecycleConfigurationV2;
   private bucketAclV2: aws.s3.BucketAclV2;
 
   constructor(name: string, args: RemotionLambdaConfig, opts?: pulumi.ComponentResourceOptions) {
@@ -110,6 +111,27 @@ export class RemotionLambda extends pulumi.ComponentResource {
         dependsOn: [this.bucket, this.bucketOwnershipControls, this.bucketPublicAccessBlock],
       },
     );
+
+    const getDeleteAfterFilter = (days: number) => ({
+      id: `DELETE_AFTER_${days}_DAYS`,
+      filter: { prefix: `renders/${days}-day` },
+      status: "Enabled",
+      expiration: { days },
+    });
+
+    this.bucketLifecycleConfigV2 = new aws.s3.BucketLifecycleConfigurationV2(
+      `${name}LifecycleConfigV2`,
+      {
+        bucket: this.bucket.id,
+        rules: [
+          getDeleteAfterFilter(1),
+          getDeleteAfterFilter(3),
+          getDeleteAfterFilter(7),
+          getDeleteAfterFilter(30),
+        ],
+      },
+      { parent: this, dependsOn: [this.bucket] },
+    );
   }
 
   private uploadSiteContent(name: string, sitePath: string, bundleCommand?: string) {
@@ -140,6 +162,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
             this.bucket,
             this.bucketOwnershipControls,
             this.bucketPublicAccessBlock,
+            this.bucketLifecycleConfigV2,
             this.bucketAclV2,
           ],
         },
