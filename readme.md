@@ -36,3 +36,7 @@ const res = await renderMediaOnLambda({
   codec: "h264",
 });
 ```
+
+## Contact
+
+If you need assistance with creating Remotion videos or web development, I also offer contract work. Feel free to reach out to me at [karel@asius.ai](mailto:karel@asius.ai) for any inquiries or help you might need.
