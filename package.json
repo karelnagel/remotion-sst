@@ -14,6 +14,7 @@
     "url": "https://github.com/karelnagel/remotion-sst.git"
   },
   "dependencies": {
+    "@aws-sdk/middleware-retry": "^3.374.0",
     "@pulumi/aws": "^6.27.0",
     "@pulumi/pulumi": "^3.111.1",
     "axios": "^1.6.8",
