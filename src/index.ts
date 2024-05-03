@@ -40,6 +40,14 @@ type RemotionLambdaConfig = {
    * @default 2048
    */
   memorySizeInMb?: number;
+  
+  /**
+   * The path to the lambda zip file.
+   *
+   * @default (remotionlambda-arm64.zip in node_modules/@remotion/lambda)
+   *
+   */
+  lambdaZipPath?: string;
 };
 
 /**
@@ -195,7 +203,7 @@ export class RemotionLambda extends pulumi.ComponentResource {
       { parent: this },
     );
 
-    const zipPath = path.join(
+    const zipPath = args.lambdaZipPath || path.join(
       process.cwd(),
       "node_modules",
       "@remotion/lambda",
